@@ -67,15 +67,34 @@ async def login_page(request: Request):
 @app.post("/auth/login")
 async def login_user(idToken: str = Form(...)):
     try:
-        id_token.verify_firebase_token(idToken, firebase_request_adapter)  
-        response = RedirectResponse(url="/", status_code=302)  
+        decoded = id_token.verify_firebase_token(idToken, firebase_request_adapter)
+        uid = decoded.get("uid") or decoded.get("sub")
+        email = decoded.get("email")
+
+        # ✅ Check if user exists in Firestore
+        user_ref = db.collection("User").document(uid)
+        user_doc = user_ref.get()
+
+        if not user_doc.exists:
+            # Initialize their model
+            user_ref.set({
+                "uid": uid,
+                "email": email,
+                "following": [],
+                "followers": []
+            })
+            print(f"✅ New user initialized in Firestore: {email}")
+        else:
+            print(f"🔄 User already exists: {email}")
+
+        # Set the cookie and redirect
+        response = RedirectResponse(url="/", status_code=302)
         response.set_cookie("token", idToken, httponly=True)
         return response
+
     except Exception as e:
         print("❌ Login token verification failed:", e)
         return JSONResponse(status_code=401, content={"error": "Invalid token"})
-
-
 
 
 @app.get("/dashboard", response_class=HTMLResponse)
@@ -112,14 +131,17 @@ async def save_user(payload: dict = Body(...), authorization: str = Header(None)
     if not uid or not email:
         return JSONResponse(status_code=400, content={"error": "UID and email are required"})
 
-    # ✅ Save user to Firestore
+   
     db.collection("User").document(uid).set({
         "uid": uid,
-        "email": email
-    })
+        "email": email,
+        "following": [],
+        "followers": []
+    }, merge=True)
 
-    print("✅ Saved user to Firestore:", {"uid": uid, "email": email})
-    return {"message": "User saved"}
+    print("✅ Saved (or updated) user to Firestore without overwriting:", {"uid": uid, "email": email})
+    return {"message": "User saved or updated successfully"}
+
 
 @app.get("/create_post", response_class=HTMLResponse)
 async def create_post_form(request: Request):
