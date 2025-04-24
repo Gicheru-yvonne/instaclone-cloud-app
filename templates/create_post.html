@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Post</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <h1>Create New Post</h1>
+
+    <form action="/create_post" method="post">
+        <label>Username:</label>
+        <input type="text" name="username" required><br><br>
+
+        <label>Caption:</label>
+        <input type="text" name="caption" required><br><br>
+
+        <button type="submit">Submit</button>
+    </form>
+
+    <br><a href="/dashboard">Back to Dashboard</a>
+</body>
+</html>

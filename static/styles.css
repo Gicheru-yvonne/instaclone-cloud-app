@@ -1,0 +1,168 @@
+
+body {
+    font-family: 'Poppins', Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f7fa;
+    color: #333;
+    text-align: center;
+}
+
+h1, h2, h3 {
+    color: #222;
+    margin-top: 30px;
+    margin-bottom: 10px;
+}
+
+h1 {
+    font-size: 2.5em;
+}
+
+h2 {
+    font-size: 1.8em;
+}
+
+h3 {
+    font-size: 1.4em;
+}
+
+
+#login-box, #add-driver-form, #add-team-form, form {
+    background-color: #fff;
+    padding: 25px;
+    margin: 20px auto;
+    max-width: 600px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+label {
+    display: block;
+    margin-top: 12px;
+    font-weight: 500;
+    text-align: left;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+select {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1em;
+    box-sizing: border-box;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: #007BFF;
+    box-shadow: 0 0 4px rgba(0, 123, 255, 0.5);
+}
+
+
+button {
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin: 8px;
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 1em;
+    transition: background-color 0.2s ease;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+#logout-btn {
+    margin-top: 15px;
+}
+
+
+ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 20px auto;
+    max-width: 600px;
+}
+
+ul li {
+    background-color: #ffffff;
+    padding: 12px 15px;
+    margin: 8px 0;
+    border-radius: 6px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    text-align: left;
+}
+
+ul li a {
+    color: #007BFF;
+    font-weight: 600;
+    margin-right: 10px;
+    text-decoration: none;
+}
+
+table {
+    margin: 0 auto;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    border: 1px solid #ccc;
+    padding: 10px 14px;
+    text-align: center;
+}
+
+th {
+    background-color: #f1f1f1;
+    font-weight: bold;
+}
+
+
+.highlight-green {
+    background-color: #d4edda;
+    font-weight: bold;
+}
+
+.error {
+    color: red;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+
+.button-group {
+    margin-top: 40px;
+}
+
+.nav-btn {
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    padding: 15px 30px;
+    margin: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+.nav-btn:hover {
+    background-color: #45a049;
+}
+
+.logout-btn {
+    background-color: #e63946;
+}
+
+.logout-btn:hover {
+    background-color: #d62828;
+}

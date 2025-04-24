@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Home - Assignment App</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="/static/firebase-login.js"></script>  <!-- ✅ Add your JS here -->
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Welcome to Your Instagram App!</h1>
+
+        {% if not logged_in %}
+            <p class="error">❌ You are not logged in. Please <a href="/login">log in here</a>.</p>
+        {% else %}
+            <p>🎉 Logged In Successfully!</p>
+            <p>User: {{ user_email if user_email else "Unknown" }}</p>
+
+
+            <div class="button-group">
+                <a href="/create_post"><button class="nav-btn">📝 Create Post</button></a>
+                <a href="/follow"><button class="nav-btn">🤝 Follow a User</button></a>
+                <a href="/logout"><button class="nav-btn logout-btn">🚪 Logout</button></a>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
