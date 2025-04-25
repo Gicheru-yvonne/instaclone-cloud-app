@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Followers</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <h1>👥 Your Followers</h1>
+    {% if followers %}
+        <ul>
+            {% for email in followers %}
+                <li>{{ email }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No followers yet.</p>
+    {% endif %}
+    <a href="/profile"><button>⬅️ Back to Profile</button></a>
+</body>
+</html>

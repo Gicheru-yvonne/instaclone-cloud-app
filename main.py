@@ -236,25 +236,85 @@ async def follow_user(request: Request, target_uid: str = Form(...)):
 async def profile_page(request: Request):
     try:
         decoded = verify_token(request)
-        username = decoded.get("email").split("@")[0].lower()  
+        username = decoded.get("email").split("@")[0].lower()
+        uid = decoded.get("uid") or decoded.get("sub")
 
-        
+        # ✅ Get the posts for the current user
         posts_query = (
             db.collection("Post")
             .where("Username", "==", username)
             .order_by("Date", direction=firestore.Query.DESCENDING)
             .stream()
         )
-
         posts = [post.to_dict() for post in posts_query]
 
+        # ✅ Get followers and following from the 'User' collection
+        user_doc = db.collection("User").document(uid).get()
+        if user_doc.exists:
+            user_data = user_doc.to_dict()
+            followers = user_data.get("followers", [])
+            following = user_data.get("following", [])
+        else:
+            followers = []
+            following = []
+
+        # ✅ Pass followers_count and following_count to the template
         return templates.TemplateResponse("profile.html", {
             "request": request,
             "posts": posts,
-            "username": username
+            "username": username,
+            "followers_count": len(followers),
+            "following_count": len(following)
         })
 
     except Exception as e:
         print("❌ Error fetching profile posts:", e)
         return RedirectResponse("/login")
+
+@app.get("/followers", response_class=HTMLResponse)
+async def followers_page(request: Request):
+    try:
+        decoded = verify_token(request)
+        uid = decoded.get("uid") or decoded.get("sub")
+
+        user_doc = db.collection("User").document(uid).get()
+        followers = user_doc.to_dict().get("followers", []) if user_doc.exists else []
+
+        # Fetch follower emails or info
+        follower_details = []
+        for follower_uid in followers:
+            doc = db.collection("User").document(follower_uid).get()
+            if doc.exists:
+                follower_details.append(doc.to_dict().get("email"))
+
+        return templates.TemplateResponse("followers.html", {
+            "request": request,
+            "followers": follower_details
+        })
+    except:
+        return RedirectResponse("/login")
+
+@app.get("/following", response_class=HTMLResponse)
+async def following_page(request: Request):
+    try:
+        decoded = verify_token(request)
+        uid = decoded.get("uid") or decoded.get("sub")
+
+        user_doc = db.collection("User").document(uid).get()
+        following = user_doc.to_dict().get("following", []) if user_doc.exists else []
+
+        # Fetch following emails or info
+        following_details = []
+        for following_uid in following:
+            doc = db.collection("User").document(following_uid).get()
+            if doc.exists:
+                following_details.append(doc.to_dict().get("email"))
+
+        return templates.TemplateResponse("following.html", {
+            "request": request,
+            "following": following_details
+        })
+    except:
+        return RedirectResponse("/login")
+
 

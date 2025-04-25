@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Following</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <h1>➡️ People You Are Following</h1>
+
+    {% if following %}
+        <ul>
+            {% for email in following %}
+                <li>{{ email }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>😕 You are not following anyone yet.</p>
+    {% endif %}
+
+    <a href="/profile"><button>⬅️ Back to Profile</button></a>
+</body>
+</html>

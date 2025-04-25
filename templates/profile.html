@@ -6,6 +6,13 @@
 </head>
 <body>
     <h1>👤 Hello, {{ username }}! Welcome to your Profile Page</h1>
+
+    <!-- Followers and Following Counts -->
+    <p>
+        <a href="/followers"><strong>Followers:</strong> {{ followers_count }}</a> |
+        <a href="/following"><strong>Following:</strong> {{ following_count }}</a>
+    </p>
+
     <h2>Your Posts (Newest First)</h2>
 
     {% if posts %}
