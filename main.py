@@ -8,14 +8,15 @@ from google.cloud import firestore
 from datetime import datetime
 from fastapi import UploadFile, File
 from google.cloud import storage
+from local_constants import PROJECT_NAME, PROJECT_STORAGE_BUCKET
 
 
 app = FastAPI()
 
 firebase_request_adapter = google_requests.Request()
 db = firestore.Client()  
-bucket_name = "my-project-yvonne-452209.appspot.com"
-storage_client = storage.Client()
+
+
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
@@ -165,15 +166,14 @@ async def create_post(
 
     username = decoded.get("email").split("@")[0].lower()
 
-    
     if image.content_type not in ["image/png", "image/jpeg"]:
         raise HTTPException(status_code=400, detail="Only PNG and JPG images are allowed.")
 
-    # ✅ Upload to Google Cloud Storage
-    bucket = storage_client.bucket(bucket_name)
+    
+    bucket = storage.Client(project=PROJECT_NAME).bucket(PROJECT_STORAGE_BUCKET)
     blob = bucket.blob(f"posts/{username}_{datetime.utcnow().isoformat()}_{image.filename}")
     blob.upload_from_file(image.file, content_type=image.content_type)
-    blob.make_public()  # Make the image public so you can view it
+    blob.make_public()  
 
     image_url = blob.public_url
 
@@ -187,6 +187,7 @@ async def create_post(
 
     print(f"✅ Post saved for {username} with image: {image_url}")
     return RedirectResponse("/profile", status_code=302)
+
 
 @app.get("/follow", response_class=HTMLResponse)
 async def follow_form(request: Request):
@@ -217,16 +218,22 @@ async def follow_user(request: Request, target_uid: str = Form(...)):
     user_data = user_doc.to_dict()
     target_data = target_doc.to_dict()
 
-    # Update following list
+   
     following = user_data.get("following", [])
-    if target_uid not in following:
-        following.append(target_uid)
+    if not any(f["uid"] == target_uid for f in following):
+        following.append({
+            "uid": target_uid,
+            "timestamp": datetime.utcnow().isoformat()
+        })
         user_ref.update({"following": following})
 
-    # Update target's followers list
+    
     followers = target_data.get("followers", [])
-    if current_uid not in followers:
-        followers.append(current_uid)
+    if not any(f["uid"] == current_uid for f in followers):
+        followers.append({
+            "uid": current_uid,
+            "timestamp": datetime.utcnow().isoformat()
+        })
         target_ref.update({"followers": followers})
 
     return {"message": f"Now following user {target_uid}"}
@@ -280,9 +287,13 @@ async def followers_page(request: Request):
         user_doc = db.collection("User").document(uid).get()
         followers = user_doc.to_dict().get("followers", []) if user_doc.exists else []
 
+       
+        followers = sorted(followers, key=lambda x: x["timestamp"], reverse=True)
+
         # Fetch follower emails or info
         follower_details = []
-        for follower_uid in followers:
+        for follower in followers:
+            follower_uid = follower["uid"]
             doc = db.collection("User").document(follower_uid).get()
             if doc.exists:
                 follower_details.append(doc.to_dict().get("email"))
@@ -294,6 +305,7 @@ async def followers_page(request: Request):
     except:
         return RedirectResponse("/login")
 
+
 @app.get("/following", response_class=HTMLResponse)
 async def following_page(request: Request):
     try:
@@ -303,9 +315,13 @@ async def following_page(request: Request):
         user_doc = db.collection("User").document(uid).get()
         following = user_doc.to_dict().get("following", []) if user_doc.exists else []
 
+        
+        following = sorted(following, key=lambda x: x["timestamp"], reverse=True)
+
         # Fetch following emails or info
         following_details = []
-        for following_uid in following:
+        for following_user in following:
+            following_uid = following_user["uid"]
             doc = db.collection("User").document(following_uid).get()
             if doc.exists:
                 following_details.append(doc.to_dict().get("email"))
@@ -316,5 +332,3 @@ async def following_page(request: Request):
         })
     except:
         return RedirectResponse("/login")
-
-
