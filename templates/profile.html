@@ -11,9 +11,12 @@
     {% if posts %}
         <ul>
             {% for post in posts %}
-                <li>
+                <li style="margin-bottom: 20px;">
                     <strong>📝 Caption:</strong> {{ post.Caption }} <br>
-                    <strong>📅 Date:</strong> {{ post.Date }}
+                    <strong>📅 Date:</strong> {{ post.Date }} <br>
+                    {% if post.ImageURL %}
+                        <img src="{{ post.ImageURL }}" alt="Post Image" style="max-width: 300px; margin-top: 10px;">
+                    {% endif %}
                 </li>
             {% endfor %}
         </ul>

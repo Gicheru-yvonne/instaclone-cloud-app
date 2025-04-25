@@ -6,11 +6,16 @@ from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 from google.cloud import firestore
 from datetime import datetime
+from fastapi import UploadFile, File
+from google.cloud import storage
+
 
 app = FastAPI()
 
 firebase_request_adapter = google_requests.Request()
 db = firestore.Client()  
+bucket_name = "my-project-yvonne-452209.appspot.com"
+storage_client = storage.Client()
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
@@ -148,21 +153,40 @@ async def create_post_form(request: Request):
     return templates.TemplateResponse("create_post.html", {"request": request})
 
 @app.post("/create_post")
-async def create_post(request: Request, username: str = Form(...), caption: str = Form(...)):
+async def create_post(
+    request: Request,
+    caption: str = Form(...),
+    image: UploadFile = File(...)
+):
     try:
         decoded = verify_token(request)
     except:
         return RedirectResponse("/login", status_code=302)
 
-    # Save to Firestore 'Post' collection
+    username = decoded.get("email").split("@")[0].lower()
+
+    
+    if image.content_type not in ["image/png", "image/jpeg"]:
+        raise HTTPException(status_code=400, detail="Only PNG and JPG images are allowed.")
+
+    # ✅ Upload to Google Cloud Storage
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(f"posts/{username}_{datetime.utcnow().isoformat()}_{image.filename}")
+    blob.upload_from_file(image.file, content_type=image.content_type)
+    blob.make_public()  # Make the image public so you can view it
+
+    image_url = blob.public_url
+
+    # ✅ Save post metadata in Firestore
     db.collection("Post").add({
-        "Username": username.lower(),
+        "Username": username,
         "Date": datetime.utcnow().isoformat(),
-        "Caption": caption
+        "Caption": caption,
+        "ImageURL": image_url
     })
 
-    print(f"✅ New post saved for {username}")
-    return RedirectResponse("/dashboard", status_code=302)
+    print(f"✅ Post saved for {username} with image: {image_url}")
+    return RedirectResponse("/profile", status_code=302)
 
 @app.get("/follow", response_class=HTMLResponse)
 async def follow_form(request: Request):
