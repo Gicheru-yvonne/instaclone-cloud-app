@@ -156,7 +156,7 @@ async def create_post(request: Request, username: str = Form(...), caption: str 
 
     # Save to Firestore 'Post' collection
     db.collection("Post").add({
-        "Username": username,
+        "Username": username.lower(),
         "Date": datetime.utcnow().isoformat(),
         "Caption": caption
     })
@@ -206,3 +206,31 @@ async def follow_user(request: Request, target_uid: str = Form(...)):
         target_ref.update({"followers": followers})
 
     return {"message": f"Now following user {target_uid}"}
+
+
+@app.get("/profile", response_class=HTMLResponse)
+async def profile_page(request: Request):
+    try:
+        decoded = verify_token(request)
+        username = decoded.get("email").split("@")[0].lower()  
+
+        
+        posts_query = (
+            db.collection("Post")
+            .where("Username", "==", username)
+            .order_by("Date", direction=firestore.Query.DESCENDING)
+            .stream()
+        )
+
+        posts = [post.to_dict() for post in posts_query]
+
+        return templates.TemplateResponse("profile.html", {
+            "request": request,
+            "posts": posts,
+            "username": username
+        })
+
+    except Exception as e:
+        print("❌ Error fetching profile posts:", e)
+        return RedirectResponse("/login")
+

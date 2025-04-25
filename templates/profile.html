@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ username }}'s Profile</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <h1>👤 Hello, {{ username }}! Welcome to your Profile Page</h1>
+    <h2>Your Posts (Newest First)</h2>
+
+    {% if posts %}
+        <ul>
+            {% for post in posts %}
+                <li>
+                    <strong>📝 Caption:</strong> {{ post.Caption }} <br>
+                    <strong>📅 Date:</strong> {{ post.Date }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>😕 No posts yet.</p>
+    {% endif %}
+
+    <a href="/"><button>⬅️ Back to Home</button></a>
+</body>
+</html>
