@@ -332,3 +332,109 @@ async def following_page(request: Request):
         })
     except:
         return RedirectResponse("/login")
+
+@app.get("/user/{target_uid}", response_class=HTMLResponse)
+async def view_user_profile(request: Request, target_uid: str):
+    try:
+        decoded = verify_token(request)
+        current_uid = decoded.get("uid") or decoded.get("sub")
+
+        # Don't allow viewing your own profile here
+        if current_uid == target_uid:
+            return RedirectResponse("/profile")
+
+        target_doc = db.collection("User").document(target_uid).get()
+        if not target_doc.exists:
+            return JSONResponse(status_code=404, content={"error": "User not found"})
+
+        target_data = target_doc.to_dict()
+        target_email = target_data.get("email")
+
+        # Check if current user is following target user
+        is_following = False
+
+        current_user_doc = db.collection("User").document(current_uid).get()
+        if current_user_doc.exists:
+            current_user_data = current_user_doc.to_dict()
+            following_list = current_user_data.get("following", [])
+            is_following = any(f["uid"] == target_uid for f in following_list)
+
+        return templates.TemplateResponse("user_profile.html", {
+            "request": request,
+            "target_uid": target_uid,
+            "target_email": target_email,
+            "is_following": is_following
+        })
+
+    except Exception as e:
+        print("❌ Error loading user profile:", e)
+        return RedirectResponse("/login")
+
+@app.post("/unfollow")
+async def unfollow_user(request: Request, target_uid: str = Form(...)):
+    try:
+        decoded = verify_token(request)
+    except:
+        return RedirectResponse("/login", status_code=302)
+
+    current_uid = decoded.get("sub")
+    user_ref = db.collection("User").document(current_uid)
+    target_ref = db.collection("User").document(target_uid)
+
+    user_doc = user_ref.get()
+    target_doc = target_ref.get()
+
+    if not user_doc.exists or not target_doc.exists:
+        return JSONResponse(status_code=404, content={"error": "User not found"})
+
+    user_data = user_doc.to_dict()
+    target_data = target_doc.to_dict()
+
+    # Remove from following
+    following = user_data.get("following", [])
+    following = [f for f in following if f["uid"] != target_uid]
+    user_ref.update({"following": following})
+
+    # Remove from followers
+    followers = target_data.get("followers", [])
+    followers = [f for f in followers if f["uid"] != current_uid]
+    target_ref.update({"followers": followers})
+
+    return {"message": f"Unfollowed user {target_uid}"}
+
+@app.get("/search", response_class=HTMLResponse)
+async def search_page(request: Request):
+    try:
+        verify_token(request)
+        return templates.TemplateResponse("search.html", {"request": request})
+    except:
+        return RedirectResponse("/login")
+
+@app.get("/search_results", response_class=HTMLResponse)
+async def search_results(request: Request, query: str):
+    try:
+        decoded = verify_token(request)
+        results = []
+
+        # 🔥 Query users where the email starts with the search query
+        users = db.collection("User").stream()
+        for user in users:
+            user_data = user.to_dict()
+            email = user_data.get("email", "")
+            profile_name = email.split("@")[0].lower()
+
+            if profile_name.startswith(query.lower()):
+                results.append({
+                    "uid": user_data.get("uid"),
+                    "email": email
+                })
+
+        return templates.TemplateResponse("search_results.html", {
+            "request": request,
+            "results": results,
+            "query": query
+        })
+
+    except Exception as e:
+        print("❌ Error during search:", e)
+        return RedirectResponse("/login")

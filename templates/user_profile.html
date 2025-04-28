@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ target_email }}'s Profile</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <h1>👤 Viewing Profile of: {{ target_email }}</h1>
+
+    {% if is_following %}
+        <form action="/unfollow" method="post">
+            <input type="hidden" name="target_uid" value="{{ target_uid }}">
+            <button type="submit" style="background-color: red; color: white;">❌ Unfollow</button>
+        </form>
+    {% else %}
+        <form action="/follow" method="post">
+            <input type="hidden" name="target_uid" value="{{ target_uid }}">
+            <button type="submit" style="background-color: green; color: white;">✅ Follow</button>
+        </form>
+    {% endif %}
+
+    <br>
+    <a href="/profile"><button>⬅️ Back to Your Profile</button></a>
+</body>
+</html>

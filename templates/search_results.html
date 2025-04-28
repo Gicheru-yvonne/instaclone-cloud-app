@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Search Results</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <h1>🔎 Search Results for "{{ query }}"</h1>
+
+    {% if results %}
+        <ul>
+            {% for user in results %}
+                <li>
+                    {{ user.email }} 
+                    <a href="/user/{{ user.uid }}"><button>View Profile</button></a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No profiles found starting with "{{ query }}".</p>
+    {% endif %}
+
+    <a href="/search"><button>🔄 New Search</button></a>
+    <a href="/"><button>⬅️ Back to Home</button></a>
+</body>
+</html>
