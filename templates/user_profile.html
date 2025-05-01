@@ -7,6 +7,11 @@
 <body>
     <h1>👤 Viewing Profile of: {{ target_email }}</h1>
 
+    <div style="margin-bottom: 1em;">
+        <strong>Followers:</strong> {{ followers_count }} |
+        <strong>Following:</strong> {{ following_count }}
+    </div>
+
     {% if is_following %}
         <form action="/unfollow" method="post">
             <input type="hidden" name="target_uid" value="{{ target_uid }}">
@@ -17,6 +22,21 @@
             <input type="hidden" name="target_uid" value="{{ target_uid }}">
             <button type="submit" style="background-color: green; color: white;">✅ Follow</button>
         </form>
+    {% endif %}
+
+    <hr>
+
+    <h2>📝 Their Posts (Newest First)</h2>
+    {% if posts %}
+        {% for post in posts %}
+            <div style="border: 1px solid #ccc; padding: 1em; margin-bottom: 1em;">
+                <p><strong>📝 Caption:</strong> {{ post.Caption }}</p>
+                <p><strong>📅 Date:</strong> {{ post.Date }}</p>
+                <img src="{{ post.ImageURL }}" alt="Post Image" style="max-width: 300px;">
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>This user has not posted anything yet.</p>
     {% endif %}
 
     <br>

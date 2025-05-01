@@ -339,36 +339,53 @@ async def view_user_profile(request: Request, target_uid: str):
         decoded = verify_token(request)
         current_uid = decoded.get("uid") or decoded.get("sub")
 
-        # Don't allow viewing your own profile here
+        # Redirect if user is viewing their own profile
         if current_uid == target_uid:
             return RedirectResponse("/profile")
 
+        # Get target user data
         target_doc = db.collection("User").document(target_uid).get()
         if not target_doc.exists:
             return JSONResponse(status_code=404, content={"error": "User not found"})
-
         target_data = target_doc.to_dict()
         target_email = target_data.get("email")
+        target_username = target_email.split("@")[0].lower()
 
-        # Check if current user is following target user
-        is_following = False
+        # Get target user's posts
+        posts_query = (
+            db.collection("Post")
+            .where("Username", "==", target_username)
+            .order_by("Date", direction=firestore.Query.DESCENDING)
+            .stream()
+        )
+        posts = [post.to_dict() for post in posts_query]
 
+        # Followers & following count
+        followers = target_data.get("followers", [])
+        following = target_data.get("following", [])
+
+        # Check if current user follows target user
         current_user_doc = db.collection("User").document(current_uid).get()
+        is_following = False
         if current_user_doc.exists:
             current_user_data = current_user_doc.to_dict()
-            following_list = current_user_data.get("following", [])
-            is_following = any(f["uid"] == target_uid for f in following_list)
+            is_following = any(f["uid"] == target_uid for f in current_user_data.get("following", []))
 
         return templates.TemplateResponse("user_profile.html", {
             "request": request,
             "target_uid": target_uid,
             "target_email": target_email,
-            "is_following": is_following
+            "is_following": is_following,
+            "posts": posts,
+            "followers_count": len(followers),
+            "following_count": len(following)
         })
 
     except Exception as e:
         print("❌ Error loading user profile:", e)
         return RedirectResponse("/login")
+
+
 
 @app.post("/unfollow")
 async def unfollow_user(request: Request, target_uid: str = Form(...)):
@@ -437,4 +454,51 @@ async def search_results(request: Request, query: str):
 
     except Exception as e:
         print("❌ Error during search:", e)
+        return RedirectResponse("/login")
+
+@app.get("/timeline", response_class=HTMLResponse)
+async def timeline_page(request: Request):
+    try:
+        decoded = verify_token(request)
+        uid = decoded.get("uid") or decoded.get("sub")
+        username = decoded.get("email").split("@")[0].lower()
+
+       
+        user_doc = db.collection("User").document(uid).get()
+        if not user_doc.exists:
+            return RedirectResponse("/profile")
+
+        user_data = user_doc.to_dict()
+        following = user_data.get("following", [])
+
+       
+        usernames = [username]
+        for entry in following:
+            following_uid = entry.get("uid")
+            doc = db.collection("User").document(following_uid).get()
+            if doc.exists:
+                email = doc.to_dict().get("email", "")
+                follow_username = email.split("@")[0].lower()
+                usernames.append(follow_username)
+
+       
+        posts = []
+        for user in usernames:
+            query = (
+                db.collection("Post")
+                .where("Username", "==", user)
+                .stream()
+            )
+            posts.extend([post.to_dict() for post in query])
+
+      
+        posts = sorted(posts, key=lambda p: p.get("Date", ""), reverse=True)[:50]
+
+        return templates.TemplateResponse("timeline.html", {
+            "request": request,
+            "posts": posts
+        })
+
+    except Exception as e:
+        print("❌ Error loading timeline:", e)
         return RedirectResponse("/login")

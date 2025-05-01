@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>📅 Timeline</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <h1>📅 Timeline - Latest Posts</h1>
+
+    {% if posts %}
+        <ul>
+            {% for post in posts %}
+                <li>
+                    <strong>@{{ post.Username }}</strong><br>
+                    📅 {{ post.Date }}<br>
+                    📝 {{ post.Caption }}<br>
+                    {% if post.ImageURL %}
+                        <img src="{{ post.ImageURL }}" alt="Post image" style="max-width: 400px;"><br>
+                    {% endif %}
+                    <hr>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No posts yet from you or users you follow.</p>
+    {% endif %}
+
+    <a href="/profile"><button>⬅️ Back to Profile</button></a>
+</body>
+</html>
