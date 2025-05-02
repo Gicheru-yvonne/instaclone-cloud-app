@@ -18,19 +18,32 @@
                         <img src="{{ post.ImageURL }}" alt="Post image" style="max-width: 400px;"><br>
                     {% endif %}
 
-                  
+                    <!-- Comments Section -->
                     <h4>💬 Comments:</h4>
-                    {% if post.comments %}
-                        <ul>
-                            {% for comment in post.comments %}
-                                <li><strong>@{{ comment.username }}:</strong> {{ comment.text }}</li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p>No comments yet.</p>
-                    {% endif %}
+{% if post.comments %}
+    <ul>
+        {% for comment in post.comments[:5] %}
+            <li><strong>@{{ comment.username }}:</strong> {{ comment.text }}</li>
+        {% endfor %}
+    </ul>
 
-                 
+    {% if post.comments|length > 5 %}
+        <div id="more-{{ post.id }}" style="display: none;">
+            <ul>
+                {% for comment in post.comments[5:] %}
+                    <li><strong>@{{ comment.username }}:</strong> {{ comment.text }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        <button class="show-more-btn" onclick="document.getElementById('more-{{ post.id }}').style.display='block'; this.style.display='none';">
+            Show more
+        </button>
+    {% endif %}
+{% else %}
+    <p>No comments yet.</p>
+{% endif %}
+
+                    <!-- Add comment form -->
                     <form action="/comment" method="post">
                         <input type="hidden" name="post_id" value="{{ post.id }}">
                         <input type="text" name="text" maxlength="200" placeholder="Write a comment..." required>

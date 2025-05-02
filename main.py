@@ -490,13 +490,12 @@ async def timeline_page(request: Request):
                 post_data = doc.to_dict()
                 post_data["id"] = doc.id
 
-                # Fetch recent comments for this post
+               
                 comments_query = (
                     db.collection("Post")
                     .document(doc.id)
                     .collection("Comments")
                     .order_by("timestamp", direction=firestore.Query.DESCENDING)
-                    .limit(5)
                     .stream()
                 )
                 comments = []
@@ -524,20 +523,23 @@ async def timeline_page(request: Request):
 async def add_comment(request: Request, post_id: str = Form(...), text: str = Form(...)):
     try:
         decoded = verify_token(request)
-        author = decoded.get("email")
-        
-        if len(text) > 200:
+        email = decoded.get("email")
+        username = email.split("@")[0].lower()  # ✅ Extract the username
+
+        if len(text.strip()) > 200:
             raise HTTPException(status_code=400, detail="Comment too long")
 
         comment_data = {
-            "text": text,
-            "author": author,
+            "text": text.strip(),
+            "author": email,
+            "username": username,  
             "timestamp": datetime.utcnow().isoformat()
         }
 
         db.collection("Post").document(post_id).collection("Comments").add(comment_data)
 
         return RedirectResponse("/timeline", status_code=302)
+
     except Exception as e:
         print("❌ Error adding comment:", e)
         return RedirectResponse("/login")
