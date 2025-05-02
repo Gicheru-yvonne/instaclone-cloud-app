@@ -463,7 +463,6 @@ async def timeline_page(request: Request):
         uid = decoded.get("uid") or decoded.get("sub")
         username = decoded.get("email").split("@")[0].lower()
 
-       
         user_doc = db.collection("User").document(uid).get()
         if not user_doc.exists:
             return RedirectResponse("/profile")
@@ -471,7 +470,6 @@ async def timeline_page(request: Request):
         user_data = user_doc.to_dict()
         following = user_data.get("following", [])
 
-       
         usernames = [username]
         for entry in following:
             following_uid = entry.get("uid")
@@ -481,7 +479,6 @@ async def timeline_page(request: Request):
                 follow_username = email.split("@")[0].lower()
                 usernames.append(follow_username)
 
-       
         posts = []
         for user in usernames:
             query = (
@@ -489,9 +486,28 @@ async def timeline_page(request: Request):
                 .where("Username", "==", user)
                 .stream()
             )
-            posts.extend([post.to_dict() for post in query])
+            for doc in query:
+                post_data = doc.to_dict()
+                post_data["id"] = doc.id
 
-      
+                # Fetch recent comments for this post
+                comments_query = (
+                    db.collection("Post")
+                    .document(doc.id)
+                    .collection("Comments")
+                    .order_by("timestamp", direction=firestore.Query.DESCENDING)
+                    .limit(5)
+                    .stream()
+                )
+                comments = []
+                for c in comments_query:
+                    c_data = c.to_dict()
+                    c_data["username"] = c_data.get("author", "").split("@")[0]
+                    comments.append(c_data)
+
+                post_data["comments"] = comments
+                posts.append(post_data)
+
         posts = sorted(posts, key=lambda p: p.get("Date", ""), reverse=True)[:50]
 
         return templates.TemplateResponse("timeline.html", {
@@ -501,4 +517,27 @@ async def timeline_page(request: Request):
 
     except Exception as e:
         print("❌ Error loading timeline:", e)
+        return RedirectResponse("/login")
+
+
+@app.post("/comment")
+async def add_comment(request: Request, post_id: str = Form(...), text: str = Form(...)):
+    try:
+        decoded = verify_token(request)
+        author = decoded.get("email")
+        
+        if len(text) > 200:
+            raise HTTPException(status_code=400, detail="Comment too long")
+
+        comment_data = {
+            "text": text,
+            "author": author,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+        db.collection("Post").document(post_id).collection("Comments").add(comment_data)
+
+        return RedirectResponse("/timeline", status_code=302)
+    except Exception as e:
+        print("❌ Error adding comment:", e)
         return RedirectResponse("/login")

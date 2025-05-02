@@ -17,6 +17,25 @@
                     {% if post.ImageURL %}
                         <img src="{{ post.ImageURL }}" alt="Post image" style="max-width: 400px;"><br>
                     {% endif %}
+
+                  
+                    <h4>💬 Comments:</h4>
+                    {% if post.comments %}
+                        <ul>
+                            {% for comment in post.comments %}
+                                <li><strong>@{{ comment.username }}:</strong> {{ comment.text }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>No comments yet.</p>
+                    {% endif %}
+
+                 
+                    <form action="/comment" method="post">
+                        <input type="hidden" name="post_id" value="{{ post.id }}">
+                        <input type="text" name="text" maxlength="200" placeholder="Write a comment..." required>
+                        <button type="submit">➕ Comment</button>
+                    </form>
                     <hr>
                 </li>
             {% endfor %}
