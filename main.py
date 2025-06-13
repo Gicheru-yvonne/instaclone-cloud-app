@@ -265,7 +265,7 @@ async def profile_page(request: Request):
             followers = []
             following = []
 
-        # ✅ Pass followers_count and following_count to the template
+       
         return templates.TemplateResponse("profile.html", {
             "request": request,
             "posts": posts,
@@ -290,7 +290,7 @@ async def followers_page(request: Request):
        
         followers = sorted(followers, key=lambda x: x["timestamp"], reverse=True)
 
-        # Fetch follower emails or info
+        
         follower_details = []
         for follower in followers:
             follower_uid = follower["uid"]
@@ -433,7 +433,7 @@ async def search_results(request: Request, query: str):
         decoded = verify_token(request)
         results = []
 
-        # 🔥 Query users where the email starts with the search query
+        
         users = db.collection("User").stream()
         for user in users:
             user_data = user.to_dict()
