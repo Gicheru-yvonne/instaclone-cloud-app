@@ -6,7 +6,7 @@ This is a simplified replica of Instagram built as part of a Cloud Platforms & A
 
 ## ✨ Features
 
-- 🔐 **Login/Logout** handled via `firebase-login.js` and Firebase Authentication
+- 🔐 **Login/Logout**  Authentication via Firebase (login/signup/logout)
 - 👤 **User Profiles** with personal post history
 - 📷 **Image Uploads** via Cloud Storage (JPG/PNG only)
 - 📝 **Post Captions** and optional comments (max 200 characters)
